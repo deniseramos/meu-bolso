@@ -212,7 +212,8 @@ async function registrar(token, usuario, args, categorias, origem, hoje) {
   if (!(valor > 0)) return { resposta: "Não achei o valor. Qual foi o valor do gasto?" };
   const data = dataValida(args.data) ? args.data : hoje;
   const categoria = categorias.includes(args.categoria) ? args.categoria : (categorias.includes("Outros") ? "Outros" : categorias[0]);
-  const descricao = String(args.descricao || "").trim().slice(0, 120) || null;
+  // A tabela exige descrição; sem ela, vale o nome da categoria.
+  const descricao = String(args.descricao || "").trim().slice(0, 120) || categoria;
 
   const salvo = await gravarGasto(token, {
     dono: usuario.id,
@@ -223,7 +224,7 @@ async function registrar(token, usuario, args, categorias, origem, hoje) {
     origem
   });
   const texto = "Lancei " + moeda.format(Number(salvo.valor)) + " em " + salvo.categoria +
-    (salvo.descricao ? ": " + salvo.descricao : "") + ", " + dataCurta(salvo.data) + ".";
+    (salvo.descricao && salvo.descricao !== salvo.categoria ? ": " + salvo.descricao : "") + ", " + dataCurta(salvo.data) + ".";
   return { resposta: texto, lancou: true };
 }
 

@@ -279,7 +279,8 @@
     titulo.textContent = gasto.descricao || gasto.categoria;
     const detalhe = document.createElement("p");
     detalhe.className = "item-detalhe";
-    detalhe.textContent = gasto.categoria + " · " + dataCurta(gasto.data);
+    // Se a descrição é o próprio nome da categoria, não repito o nome.
+    detalhe.textContent = (titulo.textContent === gasto.categoria ? "" : gasto.categoria + " · ") + dataCurta(gasto.data);
     info.append(titulo, detalhe);
 
     const valor = document.createElement("span");
@@ -501,7 +502,8 @@
       const { error } = await banco.from("gastos").insert({
         dono: usuario.id,
         data: $("data").value || hoje(),
-        descricao: $("descricao").value.trim() || null,
+        // A tabela exige descrição; sem ela, vale o nome da categoria.
+        descricao: $("descricao").value.trim() || categoriaEscolhida,
         valor: valor,
         categoria: categoriaEscolhida,
         origem: "manual"
