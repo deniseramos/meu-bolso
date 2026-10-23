@@ -23,6 +23,9 @@
   let categoriaEscolhida = null;
   let salvando = false;
   let perguntando = false;
+  let filtroMes = new Date().getMonth() + 1; // 0 = ano inteiro
+  let filtroAno = new Date().getFullYear();
+  let pedidoDoPeriodo = 0; // só a resposta do último filtro escolhido vai para a tela
 
   // ---------- Utilidades ----------
 
@@ -57,16 +60,38 @@
     return d.getFullYear() + "-" + doisDigitos(d.getMonth() + 1) + "-" + doisDigitos(d.getDate());
   }
 
-  function limitesDoMes() {
-    const d = new Date();
-    const ano = d.getFullYear();
-    const mes = d.getMonth() + 1;
-    const proxAno = mes === 12 ? ano + 1 : ano;
-    const proxMes = mes === 12 ? 1 : mes + 1;
+  // Período escolhido nos filtros: do primeiro dia (inclusive) ao "fim" (exclusive).
+  function limitesDoPeriodo() {
+    if (!filtroMes) {
+      return { inicio: filtroAno + "-01-01", fim: (filtroAno + 1) + "-01-01" };
+    }
+    const proxAno = filtroMes === 12 ? filtroAno + 1 : filtroAno;
+    const proxMes = filtroMes === 12 ? 1 : filtroMes + 1;
     return {
-      inicio: ano + "-" + doisDigitos(mes) + "-01",
+      inicio: filtroAno + "-" + doisDigitos(filtroMes) + "-01",
       fim: proxAno + "-" + doisDigitos(proxMes) + "-01"
     };
+  }
+
+  function nomeDoMes(mes) {
+    const nome = new Date(2000, mes - 1, 1).toLocaleDateString("pt-BR", { month: "long" });
+    return nome.charAt(0).toUpperCase() + nome.slice(1);
+  }
+
+  function nomeDoPeriodo() {
+    return filtroMes ? nomeDoMes(filtroMes).toLowerCase() + " de " + filtroAno : String(filtroAno);
+  }
+
+  // Dias que entram na média: o período inteiro se já passou; até hoje se é o atual; zero se é futuro.
+  function diasParaMedia() {
+    const { inicio, fim } = limitesDoPeriodo();
+    const dia = 24 * 60 * 60 * 1000;
+    const comeco = new Date(inicio + "T00:00:00");
+    const final = new Date(fim + "T00:00:00");
+    const agora = new Date();
+    const amanha = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate() + 1);
+    const ate = amanha < final ? amanha : final;
+    return Math.max(0, Math.round((ate - comeco) / dia));
   }
 
   function dataCurta(iso) {
@@ -159,6 +184,8 @@
     if (usuario) {
       $("senha").value = "";
       limparFormulario();
+      filtroMes = new Date().getMonth() + 1;
+      filtroAno = new Date().getFullYear();
       carregarTudo();
     } else {
       limparPainel();
@@ -180,8 +207,58 @@
   }
 
   function carregarTudo() {
-    $("mes-nome").textContent = new Date().toLocaleDateString("pt-BR", { month: "long" });
-    return Promise.all([carregarMes(), carregarUltimos(), carregarResumo()]);
+    desenharFiltros();
+    return Promise.all([carregarMes(), carregarUltimos(), carregarResumo(), carregarAnos()]);
+  }
+
+  // Depois de lançar ou apagar: atualiza tudo sem perder o filtro escolhido.
+  function atualizarPainel() {
+    return Promise.all([carregarMes(), carregarUltimos(), carregarAnos()]);
+  }
+
+  // ---------- Filtros de mês e ano ----------
+
+  function desenharFiltros(anos) {
+    const caixaMes = $("filtro-mes");
+    if (!caixaMes.options.length) {
+      caixaMes.append(new Option("Ano inteiro", "0"));
+      for (let m = 1; m <= 12; m++) caixaMes.append(new Option(nomeDoMes(m), String(m)));
+    }
+    caixaMes.value = String(filtroMes);
+
+    const atual = new Date().getFullYear();
+    const lista = (anos && anos.length) ? anos : [atual];
+    if (!lista.includes(filtroAno)) lista.push(filtroAno);
+    lista.sort((a, b) => b - a);
+    const caixaAno = $("filtro-ano");
+    caixaAno.replaceChildren(...lista.map((a) => new Option(String(a), String(a))));
+    caixaAno.value = String(filtroAno);
+  }
+
+  // Anos do primeiro gasto até o ano atual.
+  async function carregarAnos() {
+    try {
+      const { data, error } = await banco
+        .from("gastos")
+        .select("data")
+        .order("data", { ascending: true })
+        .limit(1);
+      if (error) throw error;
+      const atual = new Date().getFullYear();
+      const primeiro = data && data[0] ? Math.min(Number(String(data[0].data).slice(0, 4)) || atual, atual) : atual;
+      const anos = [];
+      for (let a = atual; a >= primeiro; a--) anos.push(a);
+      desenharFiltros(anos);
+    } catch (erro) {
+      // Sem a lista do banco, fica só o ano atual e o escolhido; o erro já aparece no total.
+      desenharFiltros();
+    }
+  }
+
+  function trocarFiltro() {
+    filtroMes = Number($("filtro-mes").value) || 0;
+    filtroAno = Number($("filtro-ano").value) || new Date().getFullYear();
+    carregarMes();
   }
 
   function itemVazio(texto) {
@@ -224,7 +301,10 @@
   }
 
   async function carregarMes() {
-    const { inicio, fim } = limitesDoMes();
+    const { inicio, fim } = limitesDoPeriodo();
+    const pedido = ++pedidoDoPeriodo;
+    $("mes-nome").textContent = nomeDoPeriodo();
+    $("lista-titulo").textContent = "Gastos de " + nomeDoPeriodo();
     try {
       const { data, error } = await banco
         .from("gastos")
@@ -234,13 +314,15 @@
         .order("data", { ascending: false })
         .order("criado_em", { ascending: false });
       if (error) throw error;
+      if (pedido !== pedidoDoPeriodo) return; // outro filtro foi escolhido enquanto este carregava
       mostrarMsg($("mes-msg"), "");
       desenharMes(data || []);
     } catch (erro) {
+      if (pedido !== pedidoDoPeriodo) return;
       // Sem dado confirmado, não mostro número nenhum.
       $("total").textContent = "—";
       $("media").textContent = "";
-      $("lista-mes").replaceChildren(itemVazio("Não consegui carregar os gastos do mês."));
+      $("lista-mes").replaceChildren(itemVazio("Não consegui carregar os gastos de " + nomeDoPeriodo() + "."));
       $("barras").replaceChildren();
       mostrarMsg($("mes-msg"), traduzirErro(erro), "erro");
     }
@@ -249,12 +331,13 @@
   function desenharMes(gastos) {
     const total = gastos.reduce((soma, g) => soma + (Number(g.valor) || 0), 0);
     $("total").textContent = moeda.format(total);
-    $("media").textContent = "Média de " + moeda.format(total / new Date().getDate()) + " por dia";
+    const dias = diasParaMedia();
+    $("media").textContent = dias > 0 ? "Média de " + moeda.format(total / dias) + " por dia" : "";
 
     const lista = $("lista-mes");
     lista.replaceChildren();
     if (!gastos.length) {
-      lista.append(itemVazio("Nenhum gasto neste mês ainda."));
+      lista.append(itemVazio("Nenhum gasto em " + nomeDoPeriodo() + "."));
     } else {
       gastos.forEach((g) => lista.append(criarItem(g, true)));
     }
@@ -350,7 +433,7 @@
         return;
       }
       mostrarMsg($("mes-msg"), "Gasto apagado.", "ok");
-      await Promise.all([carregarMes(), carregarUltimos()]);
+      await atualizarPainel();
     } catch (erro) {
       mostrarMsg($("mes-msg"), traduzirErro(erro), "erro");
       botao.disabled = false;
@@ -426,7 +509,7 @@
       if (error) throw error;
       limparFormulario();
       mostrarMsg(msg, "Gasto salvo.", "ok");
-      await Promise.all([carregarMes(), carregarUltimos()]);
+      await atualizarPainel();
     } catch (erro) {
       // O valor digitado continua no campo para tentar de novo.
       mostrarMsg(msg, traduzirErro(erro, MSG_GASTO_NAO_SALVO), "erro");
@@ -554,7 +637,7 @@
       mostrarMsg(msg, corpo.resposta || "", corpo.lancou ? "ok" : "");
       if (corpo.lancou) {
         $("assistente-texto").value = "";
-        await Promise.all([carregarMes(), carregarUltimos()]);
+        await atualizarPainel();
       }
     } catch (erro) {
       mostrarMsg(msg, traduzirErro(erro), "erro");
@@ -598,6 +681,8 @@
   $("btn-criar").addEventListener("click", criarConta);
   $("btn-sair").addEventListener("click", sair);
   $("form-lancar").addEventListener("submit", salvarGasto);
+  $("filtro-mes").addEventListener("change", trocarFiltro);
+  $("filtro-ano").addEventListener("change", trocarFiltro);
   $("form-senha").addEventListener("submit", alterarSenha);
   $("form-assistente").addEventListener("submit", enviarTexto);
   campoFoto.addEventListener("change", enviarFoto);

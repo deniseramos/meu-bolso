@@ -34,6 +34,16 @@
     </header>
 
     <section class="cartao destaque" aria-labelledby="total-rotulo">
+      <div class="filtros">
+        <div>
+          <label for="filtro-mes">Mês</label>
+          <select id="filtro-mes"></select>
+        </div>
+        <div>
+          <label for="filtro-ano">Ano</label>
+          <select id="filtro-ano"></select>
+        </div>
+      </div>
       <p id="total-rotulo" class="rotulo">Gasto em <span id="mes-nome"></span></p>
       <p id="total" class="total">—</p>
       <p id="media" class="rotulo"></p>
@@ -84,7 +94,7 @@
     </section>
 
     <section class="cartao" aria-labelledby="lista-titulo">
-      <h2 id="lista-titulo">Gastos do mês</h2>
+      <h2 id="lista-titulo">Gastos do período</h2>
       <ul id="lista-mes" class="lista"></ul>
     </section>
 

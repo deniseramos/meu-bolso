@@ -72,6 +72,10 @@ h2 { font-size: 1.05rem; margin-bottom: 12px; }
 }
 .destaque { border-top: 6px solid var(--laranja); }
 
+/* Filtros de mês e ano, lado a lado */
+.filtros { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+.filtros label { margin-top: 0; }
+
 .rotulo { color: var(--suave); font-size: 0.9rem; }
 .total {
   font-size: 2.4rem;
@@ -91,7 +95,7 @@ label, .rotulo-campo {
 }
 label:first-child, form > label:first-of-type { margin-top: 0; }
 
-input {
+input, select {
   width: 100%;
   min-height: 48px;
   padding: 10px 12px;
@@ -101,7 +105,7 @@ input {
   border: 1px solid #D6D3D1;
   border-radius: 10px;
 }
-input:focus { outline: 3px solid var(--laranja-claro); border-color: var(--laranja); }
+input:focus, select:focus { outline: 3px solid var(--laranja-claro); border-color: var(--laranja); }
 .campo-valor { font-size: 1.6rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 
 .botao {
