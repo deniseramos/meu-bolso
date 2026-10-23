@@ -9,7 +9,7 @@
 
   const MSG_SEM_INTERNET = "Sem internet. Confira a conexão e tente de novo.";
   const MSG_GASTO_NAO_SALVO = "Sem internet. Este gasto não foi salvo. Toque em Salvar de novo quando a conexão voltar.";
-  const MSG_ASSISTENTE = "O assistente chega na sexta.";
+  const LADO_MAXIMO_FOTO = 1600;
 
   if (!window.supabase || !cfg.SUPABASE_URL || !cfg.SUPABASE_CHAVE_PUBLICA) {
     mostrarMsg($("entrada-msg"), "Não consegui carregar o app. Confira a internet e recarregue a página.", "erro");
@@ -22,6 +22,7 @@
   let usuario = null;
   let categoriaEscolhida = null;
   let salvando = false;
+  let perguntando = false;
 
   // ---------- Utilidades ----------
 
@@ -490,11 +491,105 @@
     }
   }
 
-  // ---------- Assistente (chega na sexta) ----------
+  // ---------- Assistente ----------
+  // A foto do cupom é reduzida aqui no aparelho e só segue para a função; ela não é guardada.
 
-  function avisarAssistente(evento) {
-    if (evento) evento.preventDefault();
-    mostrarMsg($("assistente-msg"), MSG_ASSISTENTE);
+  const campoFoto = document.createElement("input");
+  campoFoto.type = "file";
+  campoFoto.accept = "image/*";
+  campoFoto.hidden = true;
+  document.body.append(campoFoto);
+
+  function travarAssistente(travar) {
+    perguntando = travar;
+    $("form-assistente").querySelectorAll("button, input").forEach((el) => { el.disabled = travar; });
+  }
+
+  function carregarImagem(arquivo) {
+    return new Promise((resolver, rejeitar) => {
+      const endereco = URL.createObjectURL(arquivo);
+      const img = new Image();
+      img.onload = () => { URL.revokeObjectURL(endereco); resolver(img); };
+      img.onerror = () => { URL.revokeObjectURL(endereco); rejeitar(new Error("foto")); };
+      img.src = endereco;
+    });
+  }
+
+  // Devolve a foto em JPEG, com no máximo 1600 px no lado maior, sem o prefixo "data:".
+  async function reduzirFoto(arquivo) {
+    const img = await carregarImagem(arquivo);
+    const escala = Math.min(1, LADO_MAXIMO_FOTO / Math.max(img.naturalWidth, img.naturalHeight));
+    const tela = document.createElement("canvas");
+    tela.width = Math.round(img.naturalWidth * escala);
+    tela.height = Math.round(img.naturalHeight * escala);
+    tela.getContext("2d").drawImage(img, 0, 0, tela.width, tela.height);
+    const dados = tela.toDataURL("image/jpeg", 0.85);
+    tela.width = tela.height = 0; // libera a memória da foto
+    return dados.slice(dados.indexOf(",") + 1);
+  }
+
+  async function perguntarAssistente(pedido) {
+    const msg = $("assistente-msg");
+    if (!navigator.onLine) {
+      mostrarMsg(msg, MSG_SEM_INTERNET, "erro");
+      return;
+    }
+    travarAssistente(true);
+    mostrarMsg(msg, pedido.imagem ? "Lendo o cupom…" : "Pensando…");
+    try {
+      const { data } = await banco.auth.getSession();
+      const token = data && data.session && data.session.access_token;
+      if (!token) {
+        mostrarMsg(msg, "Sua entrada expirou. Toque em Sair e entre de novo.", "erro");
+        return;
+      }
+      const resp = await fetch("/api/assistente", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+        body: JSON.stringify({ ...pedido, categorias: categorias })
+      });
+      let corpo = {};
+      try { corpo = await resp.json(); } catch (_) { /* resposta sem JSON */ }
+      if (!resp.ok) {
+        mostrarMsg(msg, corpo.erro || "O assistente não respondeu. Tente de novo em instantes.", "erro");
+        return;
+      }
+      mostrarMsg(msg, corpo.resposta || "", corpo.lancou ? "ok" : "");
+      if (corpo.lancou) {
+        $("assistente-texto").value = "";
+        await Promise.all([carregarMes(), carregarUltimos()]);
+      }
+    } catch (erro) {
+      mostrarMsg(msg, traduzirErro(erro), "erro");
+    } finally {
+      travarAssistente(false);
+    }
+  }
+
+  function enviarTexto(evento) {
+    evento.preventDefault();
+    if (perguntando) return;
+    const mensagem = $("assistente-texto").value.trim();
+    if (!mensagem) {
+      mostrarMsg($("assistente-msg"), "Escreva um gasto, por exemplo: mercado 50 hoje.", "erro");
+      $("assistente-texto").focus();
+      return;
+    }
+    perguntarAssistente({ mensagem: mensagem });
+  }
+
+  async function enviarFoto() {
+    const arquivo = campoFoto.files && campoFoto.files[0];
+    campoFoto.value = ""; // esquece o arquivo escolhido
+    if (!arquivo || perguntando) return;
+    let imagem;
+    try {
+      imagem = await reduzirFoto(arquivo);
+    } catch (erro) {
+      mostrarMsg($("assistente-msg"), "Não consegui abrir essa foto. Tire outra foto do cupom e tente de novo.", "erro");
+      return;
+    }
+    perguntarAssistente({ mensagem: $("assistente-texto").value.trim(), imagem: imagem, mime: "image/jpeg" });
   }
 
   // ---------- Início ----------
@@ -507,8 +602,9 @@
   $("btn-sair").addEventListener("click", sair);
   $("form-lancar").addEventListener("submit", salvarGasto);
   $("form-senha").addEventListener("submit", alterarSenha);
-  $("form-assistente").addEventListener("submit", avisarAssistente);
-  $("btn-foto").addEventListener("click", avisarAssistente);
+  $("form-assistente").addEventListener("submit", enviarTexto);
+  $("btn-foto").addEventListener("click", () => { if (!perguntando) campoFoto.click(); });
+  campoFoto.addEventListener("change", enviarFoto);
 
   // O Supabase avisa quando a pessoa entra ou sai; o setTimeout evita travar o cliente.
   banco.auth.onAuthStateChange((_evento, sessao) => {
