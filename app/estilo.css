@@ -1,14 +1,14 @@
 /* Meu Bolso — estilo. Celular de 390 px primeiro. */
 
 :root {
-  --laranja: #7C3AED;
-  --laranja-escuro: #6D28D9;
-  --laranja-claro: #EDE9FE;
-  --fundo: #F5F3FF;
+  --laranja: #EA580C;
+  --laranja-escuro: #C2410C;
+  --laranja-claro: #FFEDD5;
+  --fundo: #FFF7ED;
   --cartao: #FFFFFF;
   --texto: #1C1917;
   --suave: #78716C;
-  --borda: #DDD6FE;
+  --borda: #FED7AA;
   --erro: #B91C1C;
   --ok: #15803D;
   --raio: 14px;
