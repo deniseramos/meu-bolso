@@ -494,15 +494,12 @@
   // ---------- Assistente ----------
   // A foto do cupom é reduzida aqui no aparelho e só segue para a função; ela não é guardada.
 
-  const campoFoto = document.createElement("input");
-  campoFoto.type = "file";
-  campoFoto.accept = "image/*";
-  campoFoto.hidden = true;
-  document.body.append(campoFoto);
+  const campoFoto = $("foto-cupom");
 
   function travarAssistente(travar) {
     perguntando = travar;
     $("form-assistente").querySelectorAll("button, input").forEach((el) => { el.disabled = travar; });
+    $("btn-foto").classList.toggle("travado", travar);
   }
 
   function carregarImagem(arquivo) {
@@ -603,7 +600,6 @@
   $("form-lancar").addEventListener("submit", salvarGasto);
   $("form-senha").addEventListener("submit", alterarSenha);
   $("form-assistente").addEventListener("submit", enviarTexto);
-  $("btn-foto").addEventListener("click", () => { if (!perguntando) campoFoto.click(); });
   campoFoto.addEventListener("change", enviarFoto);
 
   // O Supabase avisa quando a pessoa entra ou sai; o setTimeout evita travar o cliente.

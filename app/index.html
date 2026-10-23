@@ -71,7 +71,8 @@
         <input id="assistente-texto" type="text" placeholder="Ex.: uber 23 reais" autocomplete="off">
         <div class="assistente-botoes">
           <button type="submit" class="botao">Enviar</button>
-          <button type="button" id="btn-foto" class="botao botao-secundario">Foto do cupom</button>
+          <input id="foto-cupom" type="file" accept="image/*" class="invisivel">
+          <label for="foto-cupom" id="btn-foto" class="botao botao-secundario">Foto do cupom</label>
         </div>
         <p id="assistente-msg" class="msg" role="status"></p>
       </form>

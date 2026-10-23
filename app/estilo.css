@@ -201,6 +201,10 @@ input:focus { outline: 3px solid var(--laranja-claro); border-color: var(--laran
 .resumo-texto { white-space: pre-line; margin-bottom: 8px; }
 .assistente-botoes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .assistente-botoes .botao { margin-top: 10px; }
+/* O botão "Foto do cupom" é um rótulo que abre o seletor de foto do próprio aparelho. */
+label.botao { display: flex; align-items: center; justify-content: center; text-align: center; }
+label.botao.travado { opacity: 0.6; cursor: wait; pointer-events: none; }
+#foto-cupom:focus-visible + label.botao { outline: 3px solid var(--laranja-escuro); outline-offset: 2px; }
 
 /* Alterar senha */
 .senha summary {
