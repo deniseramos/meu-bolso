@@ -202,6 +202,17 @@ input:focus { outline: 3px solid var(--laranja-claro); border-color: var(--laran
 .assistente-botoes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .assistente-botoes .botao { margin-top: 10px; }
 
+/* Alterar senha */
+.senha summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+  color: var(--laranja-escuro);
+  cursor: pointer;
+}
+.senha[open] summary { margin-bottom: 12px; }
+
 /* Mensagens */
 .msg { min-height: 1.2em; margin-top: 10px; font-size: 0.95rem; }
 .msg:empty { margin-top: 0; min-height: 0; }

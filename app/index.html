@@ -86,6 +86,20 @@
       <h2 id="lista-titulo">Gastos do mês</h2>
       <ul id="lista-mes" class="lista"></ul>
     </section>
+
+    <details id="senha-cartao" class="cartao senha">
+      <summary>Alterar senha</summary>
+      <form id="form-senha" novalidate>
+        <label for="senha-atual">Senha atual</label>
+        <input id="senha-atual" type="password" autocomplete="current-password">
+        <label for="senha-nova">Nova senha</label>
+        <input id="senha-nova" type="password" autocomplete="new-password" minlength="6">
+        <label for="senha-repetir">Repita a nova senha</label>
+        <input id="senha-repetir" type="password" autocomplete="new-password" minlength="6">
+        <button type="submit" id="btn-senha" class="botao">Salvar nova senha</button>
+        <p id="senha-msg" class="msg" role="status"></p>
+      </form>
+    </details>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>

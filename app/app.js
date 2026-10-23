@@ -38,6 +38,8 @@
     }
     if (texto.includes("invalid login credentials")) return "E-mail ou senha incorretos. Confira e tente de novo.";
     if (texto.includes("already registered") || texto.includes("already exists")) return "Este e-mail já tem conta. Toque em Entrar.";
+    if (texto.includes("different from the old password")) return "A nova senha é igual à atual. Escolha uma senha diferente.";
+    if (texto.includes("weak") || texto.includes("pwned")) return "Essa senha é fácil de adivinhar. Escolha outra, misturando letras e números.";
     if (texto.includes("password should be") || texto.includes("password must")) return "A senha precisa ter pelo menos 6 caracteres. Escolha uma senha maior.";
     if (texto.includes("email not confirmed")) return "Este e-mail ainda não foi confirmado. Desligue a confirmação de e-mail no Supabase e tente entrar de novo.";
     if (texto.includes("invalid format") || texto.includes("invalid email") || texto.includes("is invalid")) return "Esse e-mail não parece válido. Confira o endereço.";
@@ -171,7 +173,9 @@
     $("lista-mes").replaceChildren();
     $("barras").replaceChildren();
     $("resumo").hidden = true;
-    ["mes-msg", "lancar-msg", "assistente-msg"].forEach((id) => mostrarMsg($(id), ""));
+    ["mes-msg", "lancar-msg", "assistente-msg", "senha-msg"].forEach((id) => mostrarMsg($(id), ""));
+    ["senha-atual", "senha-nova", "senha-repetir"].forEach((id) => { $(id).value = ""; });
+    $("senha-cartao").open = false;
   }
 
   function carregarTudo() {
@@ -432,6 +436,60 @@
     }
   }
 
+  // ---------- Alterar senha ----------
+
+  async function alterarSenha(evento) {
+    evento.preventDefault();
+    const msg = $("senha-msg");
+    const atual = $("senha-atual").value;
+    const nova = $("senha-nova").value;
+    const repetir = $("senha-repetir").value;
+
+    if (!atual || !nova || !repetir) {
+      mostrarMsg(msg, "Preencha os três campos para continuar.", "erro");
+      return;
+    }
+    if (nova.length < 6) {
+      mostrarMsg(msg, "A nova senha precisa ter pelo menos 6 caracteres.", "erro");
+      return;
+    }
+    if (nova !== repetir) {
+      mostrarMsg(msg, "As duas senhas novas não são iguais. Digite de novo.", "erro");
+      return;
+    }
+    if (nova === atual) {
+      mostrarMsg(msg, "A nova senha é igual à atual. Escolha uma senha diferente.", "erro");
+      return;
+    }
+
+    const botao = $("btn-senha");
+    botao.disabled = true;
+    botao.textContent = "Salvando…";
+    mostrarMsg(msg, "");
+
+    try {
+      // Confere a senha atual antes de trocar.
+      const conferencia = await banco.auth.signInWithPassword({ email: usuario.email, password: atual });
+      if (conferencia.error) {
+        const texto = String(conferencia.error.message || "").toLowerCase();
+        if (texto.includes("invalid login credentials")) {
+          mostrarMsg(msg, "A senha atual não confere. Confira e tente de novo.", "erro");
+          return;
+        }
+        throw conferencia.error;
+      }
+      const { error } = await banco.auth.updateUser({ password: nova });
+      if (error) throw error;
+      ["senha-atual", "senha-nova", "senha-repetir"].forEach((id) => { $(id).value = ""; });
+      mostrarMsg(msg, "Senha alterada.", "ok");
+    } catch (erro) {
+      mostrarMsg(msg, traduzirErro(erro), "erro");
+    } finally {
+      botao.disabled = false;
+      botao.textContent = "Salvar nova senha";
+    }
+  }
+
   // ---------- Assistente (chega na sexta) ----------
 
   function avisarAssistente(evento) {
@@ -448,6 +506,7 @@
   $("btn-criar").addEventListener("click", criarConta);
   $("btn-sair").addEventListener("click", sair);
   $("form-lancar").addEventListener("submit", salvarGasto);
+  $("form-senha").addEventListener("submit", alterarSenha);
   $("form-assistente").addEventListener("submit", avisarAssistente);
   $("btn-foto").addEventListener("click", avisarAssistente);
 
