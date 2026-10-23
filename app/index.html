@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Meu Bolso</title>
+  <meta name="theme-color" content="#EA580C">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icone.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+
+  <!-- Tela de entrada -->
+  <section id="entrada" class="entrada">
+    <img src="icone.svg" alt="" class="entrada-icone" width="72" height="72">
+    <h1>Meu Bolso</h1>
+    <form id="form-entrada" class="cartao" novalidate>
+      <label for="email">E-mail</label>
+      <input id="email" type="email" autocomplete="email" inputmode="email" required>
+      <label for="senha">Senha</label>
+      <input id="senha" type="password" autocomplete="current-password" minlength="6" required>
+      <button type="submit" id="btn-entrar" class="botao">Entrar</button>
+      <button type="button" id="btn-criar" class="botao botao-secundario">Criar conta</button>
+      <p id="entrada-msg" class="msg" role="status"></p>
+    </form>
+  </section>
+
+  <!-- Painel, depois de entrar -->
+  <main id="painel" class="painel" hidden>
+    <header class="topo">
+      <h1>Meu Bolso</h1>
+      <button type="button" id="btn-sair" class="botao-texto">Sair</button>
+    </header>
+
+    <section class="cartao destaque" aria-labelledby="total-rotulo">
+      <p id="total-rotulo" class="rotulo">Gasto em <span id="mes-nome"></span></p>
+      <p id="total" class="total">—</p>
+      <h2 class="subtitulo">Últimos lançamentos</h2>
+      <ul id="ultimos" class="lista"></ul>
+      <p id="mes-msg" class="msg" role="status"></p>
+    </section>
+
+    <section class="cartao" aria-labelledby="lancar-titulo">
+      <h2 id="lancar-titulo">Lançar à mão</h2>
+      <form id="form-lancar" novalidate>
+        <label for="valor">Valor (R$)</label>
+        <input id="valor" type="text" inputmode="decimal" placeholder="0,00" autocomplete="off" class="campo-valor">
+        <label for="descricao">Onde ou com o quê</label>
+        <input id="descricao" type="text" placeholder="Opcional" autocomplete="off" maxlength="120">
+        <p class="rotulo-campo">Categoria</p>
+        <div id="categorias" class="categorias" role="group" aria-label="Categoria"></div>
+        <label for="data">Data</label>
+        <input id="data" type="date">
+        <button type="submit" id="btn-salvar" class="botao">Salvar</button>
+        <p id="lancar-msg" class="msg" role="status"></p>
+      </form>
+    </section>
+
+    <section id="resumo" class="cartao resumo" aria-labelledby="resumo-titulo" hidden>
+      <h2 id="resumo-titulo">Resumo da semana</h2>
+      <p id="resumo-texto" class="resumo-texto"></p>
+      <p id="resumo-data" class="rotulo"></p>
+    </section>
+
+    <section class="cartao" aria-labelledby="assistente-titulo">
+      <h2 id="assistente-titulo">Assistente</h2>
+      <form id="form-assistente" class="assistente" novalidate>
+        <label for="assistente-texto" class="invisivel">Escreva o gasto</label>
+        <input id="assistente-texto" type="text" placeholder="Ex.: uber 23 reais" autocomplete="off">
+        <div class="assistente-botoes">
+          <button type="submit" class="botao">Enviar</button>
+          <button type="button" id="btn-foto" class="botao botao-secundario">Foto do cupom</button>
+        </div>
+        <p id="assistente-msg" class="msg" role="status"></p>
+      </form>
+    </section>
+
+    <section class="cartao" aria-labelledby="barras-titulo">
+      <h2 id="barras-titulo">Por categoria</h2>
+      <ul id="barras" class="barras"></ul>
+    </section>
+
+    <section class="cartao" aria-labelledby="lista-titulo">
+      <h2 id="lista-titulo">Gastos do mês</h2>
+      <ul id="lista-mes" class="lista"></ul>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="configuracao.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
