@@ -166,6 +166,7 @@
 
   function limparPainel() {
     $("total").textContent = "—";
+    $("media").textContent = "";
     $("ultimos").replaceChildren();
     $("lista-mes").replaceChildren();
     $("barras").replaceChildren();
@@ -233,6 +234,7 @@
     } catch (erro) {
       // Sem dado confirmado, não mostro número nenhum.
       $("total").textContent = "—";
+      $("media").textContent = "";
       $("lista-mes").replaceChildren(itemVazio("Não consegui carregar os gastos do mês."));
       $("barras").replaceChildren();
       mostrarMsg($("mes-msg"), traduzirErro(erro), "erro");
@@ -242,6 +244,7 @@
   function desenharMes(gastos) {
     const total = gastos.reduce((soma, g) => soma + (Number(g.valor) || 0), 0);
     $("total").textContent = moeda.format(total);
+    $("media").textContent = "Média de " + moeda.format(total / new Date().getDate()) + " por dia";
 
     const lista = $("lista-mes");
     lista.replaceChildren();
