@@ -78,7 +78,13 @@
       <h2 id="assistente-titulo">Assistente</h2>
       <form id="form-assistente" class="assistente" novalidate>
         <label for="assistente-texto" class="invisivel">Escreva o gasto</label>
-        <input id="assistente-texto" type="text" placeholder="Ex.: uber 23 reais" autocomplete="off">
+        <div class="assistente-linha">
+          <input id="assistente-texto" type="text" placeholder="Ex.: uber 23 reais" autocomplete="off">
+          <button type="button" id="btn-voz" class="botao-voz" aria-label="Falar o gasto" aria-pressed="false">
+            <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v4"/></svg>
+          </button>
+        </div>
+        <p id="dica-voz" class="rotulo" hidden>Use o microfone do teclado do celular.</p>
         <div class="assistente-botoes">
           <button type="submit" class="botao">Enviar</button>
           <input id="foto-cupom" type="file" accept="image/*" class="invisivel">

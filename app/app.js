@@ -26,6 +26,8 @@
   let filtroMes = new Date().getMonth() + 1; // 0 = ano inteiro
   let filtroAno = new Date().getFullYear();
   let pedidoDoPeriodo = 0; // só a resposta do último filtro escolhido vai para a tela
+  const Reconhecimento = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let reconhecedor = null; // existe só enquanto o microfone escuta
 
   // ---------- Utilidades ----------
 
@@ -201,6 +203,7 @@
     $("lista-mes").replaceChildren();
     $("barras").replaceChildren();
     $("resumo").hidden = true;
+    if (reconhecedor) reconhecedor.abort();
     ["mes-msg", "lancar-msg", "assistente-msg", "senha-msg"].forEach((id) => mostrarMsg($(id), ""));
     ["senha-atual", "senha-nova", "senha-repetir"].forEach((id) => { $(id).value = ""; });
     $("senha-cartao").open = false;
@@ -660,6 +663,81 @@
     perguntarAssistente({ mensagem: mensagem });
   }
 
+  // ---------- Microfone ----------
+  // O navegador transforma a fala em texto; o app não grava nem guarda o áudio.
+
+  function prepararVoz() {
+    if (!Reconhecimento) {
+      $("btn-voz").hidden = true;
+      $("dica-voz").hidden = false;
+      return;
+    }
+    $("btn-voz").addEventListener("click", alternarVoz);
+  }
+
+  function marcarOuvindo(ouvindo) {
+    const botao = $("btn-voz");
+    botao.setAttribute("aria-pressed", ouvindo ? "true" : "false");
+    botao.setAttribute("aria-label", ouvindo ? "Parar de ouvir" : "Falar o gasto");
+  }
+
+  function alternarVoz() {
+    if (perguntando) return;
+    if (reconhecedor) {
+      reconhecedor.stop(); // o que já foi ouvido segue para o assistente
+      return;
+    }
+    const msg = $("assistente-msg");
+    if (!navigator.onLine) {
+      mostrarMsg(msg, MSG_SEM_INTERNET, "erro");
+      return;
+    }
+
+    const ouvinte = new Reconhecimento();
+    ouvinte.lang = "pt-BR";
+    ouvinte.interimResults = false;
+    ouvinte.maxAlternatives = 1;
+    let ouvido = "";
+    let falhou = false;
+
+    ouvinte.onresult = (evento) => {
+      ouvido = Array.from(evento.results).map((r) => r[0].transcript).join(" ").trim();
+    };
+    ouvinte.onerror = (evento) => {
+      falhou = true;
+      if (evento.error === "aborted") return;
+      if (evento.error === "not-allowed" || evento.error === "service-not-allowed") {
+        mostrarMsg(msg, "Libere o microfone nas permissões do navegador e tente de novo.", "erro");
+      } else if (evento.error === "no-speech") {
+        mostrarMsg(msg, "Não ouvi nada. Toque no microfone e fale de novo.", "erro");
+      } else if (evento.error === "network") {
+        mostrarMsg(msg, MSG_SEM_INTERNET, "erro");
+      } else {
+        mostrarMsg(msg, "Não consegui ouvir. Toque no microfone e tente de novo.", "erro");
+      }
+    };
+    ouvinte.onend = () => {
+      reconhecedor = null;
+      marcarOuvindo(false);
+      if (ouvido) {
+        $("assistente-texto").value = ouvido;
+        perguntarAssistente({ mensagem: ouvido });
+      } else if (!falhou) {
+        mostrarMsg(msg, "Não ouvi nada. Toque no microfone e fale de novo.", "erro");
+      }
+    };
+
+    try {
+      ouvinte.start();
+    } catch (erro) {
+      mostrarMsg(msg, "Não consegui ligar o microfone. Toque nele de novo.", "erro");
+      return;
+    }
+    reconhecedor = ouvinte;
+    marcarOuvindo(true);
+    mostrarMsg(msg, "Ouvindo… fale o gasto.");
+  }
+
   async function enviarFoto() {
     const arquivo = campoFoto.files && campoFoto.files[0];
     campoFoto.value = ""; // esquece o arquivo escolhido
@@ -688,6 +766,7 @@
   $("form-senha").addEventListener("submit", alterarSenha);
   $("form-assistente").addEventListener("submit", enviarTexto);
   campoFoto.addEventListener("change", enviarFoto);
+  prepararVoz();
 
   // O Supabase avisa quando a pessoa entra ou sai; o setTimeout evita travar o cliente.
   banco.auth.onAuthStateChange((_evento, sessao) => {

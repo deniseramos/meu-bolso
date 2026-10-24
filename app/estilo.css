@@ -205,6 +205,26 @@ input:focus, select:focus { outline: 3px solid var(--laranja-escuro); outline-of
 /* Resumo e assistente */
 .resumo { border-left: 6px solid var(--laranja); }
 .resumo-texto { white-space: pre-line; margin-bottom: 8px; }
+.assistente-linha { display: flex; gap: 8px; }
+.assistente-linha input { flex: 1; min-width: 0; }
+/* Botão de microfone, ao lado do campo do assistente */
+.botao-voz {
+  flex: 0 0 52px;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: var(--laranja-escuro);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+}
+.botao-voz:active { background: var(--laranja-toque); }
+.botao-voz[aria-pressed="true"] { background: var(--erro); } /* vermelho enquanto escuta */
+.botao-voz:disabled { opacity: 0.6; cursor: wait; }
+.botao-voz:focus-visible { outline: 3px solid var(--laranja-escuro); outline-offset: 2px; }
+#dica-voz { margin-top: 6px; }
 .assistente-botoes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .assistente-botoes .botao { margin-top: 10px; }
 /* O botão "Foto do cupom" é um rótulo que abre o seletor de foto do próprio aparelho. */
