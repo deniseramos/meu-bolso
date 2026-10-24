@@ -4,6 +4,7 @@
   --laranja: #EA580C;
   --laranja-escuro: #C2410C;
   --laranja-claro: #FFEDD5;
+  --laranja-toque: #9A3412;
   --fundo: #FFF7ED;
   --cartao: #FFFFFF;
   --texto: #1C1917;
@@ -105,7 +106,7 @@ input, select {
   border: 1px solid #D6D3D1;
   border-radius: 10px;
 }
-input:focus, select:focus { outline: 3px solid var(--laranja-claro); border-color: var(--laranja); }
+input:focus, select:focus { outline: 3px solid var(--laranja-escuro); outline-offset: 2px; border-color: var(--laranja-escuro); }
 .campo-valor { font-size: 1.6rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 
 .botao {
@@ -116,12 +117,12 @@ input:focus, select:focus { outline: 3px solid var(--laranja-claro); border-colo
   font: inherit;
   font-weight: 700;
   color: #fff;
-  background: var(--laranja);
+  background: var(--laranja-escuro); /* o escuro dá contraste com o branco */
   border: none;
   border-radius: 12px;
   cursor: pointer;
 }
-.botao:active { background: var(--laranja-escuro); }
+.botao:active { background: var(--laranja-toque); }
 .botao:disabled { opacity: 0.6; cursor: wait; }
 .botao-secundario {
   margin-top: 10px;
@@ -160,8 +161,8 @@ input:focus, select:focus { outline: 3px solid var(--laranja-claro); border-colo
 }
 .categoria[aria-pressed="true"] {
   color: #fff;
-  background: var(--laranja);
-  border-color: var(--laranja);
+  background: var(--laranja-escuro);
+  border-color: var(--laranja-escuro);
   font-weight: 700;
 }
 
@@ -177,13 +178,14 @@ input:focus, select:focus { outline: 3px solid var(--laranja-claro); border-colo
 .item:last-child { border-bottom: none; }
 .item-info { flex: 1; min-width: 0; }
 .item-titulo { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.item-detalhe { color: var(--suave); font-size: 0.85rem; }
+.item-detalhe { color: var(--suave); font-size: 0.875rem; }
 .item-valor { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .item-apagar {
-  min-height: 40px;
+  min-height: 44px;
+  min-width: 44px;
   padding: 0 10px;
   font: inherit;
-  font-size: 0.85rem;
+  font-size: 0.875rem;
   color: var(--erro);
   background: none;
   border: 1px solid #FECACA;
